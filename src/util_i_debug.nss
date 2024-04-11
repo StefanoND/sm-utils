@@ -10,29 +10,32 @@
 // -----------------------------------------------------------------------------
 
 // VarNames
-const string DEBUG_COLOR    = "DEBUG_COLOR";
-const string DEBUG_LEVEL    = "DEBUG_LEVEL";
-const string DEBUG_LOG      = "DEBUG_LOG";
+const string DEBUG_COLOR = "DEBUG_COLOR";
+const string DEBUG_LEVEL = "DEBUG_LEVEL";
+const string DEBUG_LOG = "DEBUG_LOG";
 const string DEBUG_OVERRIDE = "DEBUG_OVERRIDE";
-const string DEBUG_PREFIX   = "DEBUG_PREFIX";
+const string DEBUG_PREFIX = "DEBUG_PREFIX";
+// const string DEBUG_DISPATCH = "DEBUG_DISPATCH";
 
 // Debug levels
-const int DEBUG_LEVEL_NONE     = 0; ///< No debug level set
+const int DEBUG_LEVEL_NONE = 0;     ///< No debug level set
 const int DEBUG_LEVEL_CRITICAL = 1; ///< Errors severe enough to stop the script
-const int DEBUG_LEVEL_ERROR    = 2; ///< Indicates the script malfunctioned in some way
-const int DEBUG_LEVEL_WARNING  = 3; ///< Indicates that unexpected behavior may occur
-const int DEBUG_LEVEL_NOTICE   = 4; ///< Information to track the flow of the function
-const int DEBUG_LEVEL_DEBUG    = 5; ///< Data dumps used for debugging
+const int DEBUG_LEVEL_ERROR = 2;    ///< Indicates the script malfunctioned in some way
+const int DEBUG_LEVEL_WARNING = 3;  ///< Indicates that unexpected behavior may occur
+const int DEBUG_LEVEL_NOTICE = 4;   ///< Information to track the flow of the function
+const int DEBUG_LEVEL_DEBUG = 5;    ///< Data dumps used for debugging
 
 // Debug logging
 const int DEBUG_LOG_NONE = 0x0; ///< Do not log debug messages
 const int DEBUG_LOG_FILE = 0x1; ///< Send debug messages to the log file
-const int DEBUG_LOG_DM   = 0x2; ///< Send debug messages to online DMs
-const int DEBUG_LOG_PC   = 0x4; ///< Send debug messages to the first PC
-const int DEBUG_LOG_ALL  = 0xf; ///< Send messages to the log file, DMs, and first PC
+const int DEBUG_LOG_DM = 0x2;   ///< Send debug messages to online DMs
+const int DEBUG_LOG_PC = 0x4;   ///< Send debug messages to the first PC
+// const int DEBUG_LOG_LIST = 0x8; ///< Send debug messages to the dispatch list
+const int DEBUG_LOG_ALL = 0xf; ///< Send messages to the log file, DMs, and first PC
 
-#include "util_i_color"
 #include "util_c_debug"
+#include "util_i_color"
+// #include "util_i_varlists"
 
 // -----------------------------------------------------------------------------
 //                              Function Prototypes
@@ -92,6 +95,16 @@ int GetDebugLogging();
 /// @brief Set the enabled debug logging destinations.
 /// @param nEnabled A bitmask of `DEBUG_LOG_*` destinations to enable.
 void SetDebugLogging(int nEnabled);
+
+// /// @brief Add a player object to the debug message dispatch list.  Player
+// ///     objects on the dispatch list will receive debug messages if the
+// ///     module's DEBUG_LOG_LEVEL includes DEBUG_LOG_LIST.
+// /// @param oPC Player object to add.
+// void AddDebugLoggingPC(object oPC);
+//
+// /// @brief Remove a player object from the debug dispatch list.
+// /// @param oPC Player object to remove.
+// void RemoveDebugLoggingPC(object oPC);
 
 /// @brief Return whether debug messages of a given level will be logged on a
 ///     target. Useful for avoiding spending cycles computing extra debug
@@ -175,12 +188,24 @@ string GetDebugColor(int nLevel)
         int nColor;
         switch (nLevel)
         {
-            case DEBUG_LEVEL_CRITICAL: nColor = COLOR_RED;          break;
-            case DEBUG_LEVEL_ERROR:    nColor = COLOR_ORANGE_DARK;  break;
-            case DEBUG_LEVEL_WARNING:  nColor = COLOR_ORANGE_LIGHT; break;
-            case DEBUG_LEVEL_NOTICE:   nColor = COLOR_YELLOW;       break;
-            case DEBUG_LEVEL_NONE:     nColor = COLOR_GREEN_LIGHT;  break;
-            default:                   nColor = COLOR_GRAY_LIGHT;   break;
+        case DEBUG_LEVEL_CRITICAL:
+            nColor = COLOR_RED;
+            break;
+        case DEBUG_LEVEL_ERROR:
+            nColor = COLOR_ORANGE_DARK;
+            break;
+        case DEBUG_LEVEL_WARNING:
+            nColor = COLOR_ORANGE_LIGHT;
+            break;
+        case DEBUG_LEVEL_NOTICE:
+            nColor = COLOR_YELLOW;
+            break;
+        case DEBUG_LEVEL_NONE:
+            nColor = COLOR_GREEN_LIGHT;
+            break;
+        default:
+            nColor = COLOR_GRAY_LIGHT;
+            break;
         }
 
         sColor = HexToColor(nColor);
@@ -207,7 +232,7 @@ string GetDebugPrefix(object oTarget = OBJECT_SELF)
             sPrefix = "Invalid Object: #" + ObjectToString(oTarget);
         }
         else
-            sPrefix = (sPrefix = GetTag(oTarget)) == "" ?  GetName(oTarget) : sPrefix;
+            sPrefix = (sPrefix = GetTag(oTarget)) == "" ? GetName(oTarget) : sPrefix;
 
         sPrefix = "[" + sPrefix + "]";
     }
@@ -230,6 +255,17 @@ void SetDebugLogging(int nEnabled)
     SetLocalInt(GetModule(), DEBUG_LOG, nEnabled);
 }
 
+// void AddDebugLoggingPC(object oPC)
+// {
+//     if (GetIsPC(oPC))
+//         AddListObject(GetModule(), oPC, DEBUG_DISPATCH, TRUE);
+// }
+//
+// void RemoveDebugLoggingPC(object oPC)
+// {
+//     RemoveListObject(GetModule(), oPC, DEBUG_DISPATCH);
+// }
+
 int IsDebugging(int nLevel, object oTarget = OBJECT_SELF)
 {
     return (nLevel <= GetDebugLevel(oTarget));
@@ -244,9 +280,15 @@ void Debug(string sMessage, int nLevel = DEBUG_LEVEL_DEBUG, object oTarget = OBJ
 
         switch (nLevel)
         {
-            case DEBUG_LEVEL_CRITICAL: sPrefix += "[Critical Error] "; break;
-            case DEBUG_LEVEL_ERROR:    sPrefix += "[Error] ";          break;
-            case DEBUG_LEVEL_WARNING:  sPrefix += "[Warning] ";        break;
+        case DEBUG_LEVEL_CRITICAL:
+            sPrefix += "[Critical Error] ";
+            break;
+        case DEBUG_LEVEL_ERROR:
+            sPrefix += "[Error] ";
+            break;
+        case DEBUG_LEVEL_WARNING:
+            sPrefix += "[Warning] ";
+            break;
         }
 
         if (!HandleDebug(sPrefix, sMessage, nLevel, oTarget))
@@ -265,6 +307,17 @@ void Debug(string sMessage, int nLevel = DEBUG_LEVEL_DEBUG, object oTarget = OBJ
 
         if (nLogging & DEBUG_LOG_PC)
             SendMessageToPC(GetFirstPC(), sMessage);
+
+        // if (nLogging & DEBUG_LOG_LIST)
+        // {
+        //     json jDispatchList = GetObjectList(GetModule(), DEBUG_DISPATCH);
+        //     int n; for (n; n < JsonGetLength(jDispatchList); n++)
+        //     {
+        //         object oPC = GetListObject(GetModule(), n, DEBUG_DISPATCH);
+        //         if (GetIsPC(oPC) && !((nLogging & DEBUG_LOG_PC) && oPC == GetFirstPC()))
+        //             SendMessageToPC(oPC, sMessage);
+        //     }
+        // }
     }
 }
 

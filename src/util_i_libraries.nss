@@ -127,11 +127,11 @@
 /// the `main()` function yourself.
 /// ----------------------------------------------------------------------------
 
-#include "util_i_debug"
 #include "util_i_csvlists"
-#include "util_i_sqlite"
-#include "util_i_nss"
+#include "util_i_debug"
 #include "util_i_matching"
+#include "util_i_nss"
+#include "util_i_sqlite"
 
 // -----------------------------------------------------------------------------
 //                                   Constants
@@ -216,7 +216,7 @@ void LoadLibrariesByPrefix(string sPrefix, int bForce = FALSE);
 /// @brief Execute a registered library script.
 /// @param sScript The unique name of the library script.
 /// @param oSelf The object that should execute the script as OBJECT_SELF.
-/// @returns The value set by SetLibraryReturnValue() in the script.
+/// @returns The value set by LibraryReturn() in the script.
 /// @note If sScript is not registered as a library script, it will be executed
 ///     as a regular script instead.
 int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF);
@@ -254,19 +254,18 @@ void LibraryReturn(int nValue);
 void CreateLibraryTable(int bReset = FALSE)
 {
     SqlCreateTableModule("library_scripts",
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-        "sLibrary TEXT NOT NULL, " +
-        "sScript TEXT NOT NULL UNIQUE ON CONFLICT REPLACE, " +
-        "nEntry INTEGER NOT NULL);",
-        bReset);
+                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " + "sLibrary TEXT NOT NULL, " +
+                             "sScript TEXT NOT NULL UNIQUE ON CONFLICT REPLACE, " +
+                             "nEntry INTEGER NOT NULL);",
+                         bReset);
 }
 
 void AddLibraryScript(string sLibrary, string sScript, int nEntry = 0)
 {
     CreateLibraryTable();
 
-    string sQuery = "INSERT INTO library_scripts (sLibrary, sScript, nEntry) " +
-                    "VALUES (@sLibrary, @sScript, @nEntry);";
+    string sQuery =
+        "INSERT INTO library_scripts (sLibrary, sScript, nEntry) " + "VALUES (@sLibrary, @sScript, @nEntry);";
     sqlquery sql = SqlPrepareQueryModule(sQuery);
     SqlBindString(sql, "@sLibrary", sLibrary);
     SqlBindString(sql, "@sScript", sScript);
@@ -279,9 +278,8 @@ string GetScriptFieldData(string sField, string sScript)
 {
     CreateLibraryTable();
 
-    string sQuery = "SELECT " + sField + " FROM library_scripts " +
-                    "WHERE sScript = @sScript;";
-    sqlquery sql = SqlPrepareQueryModule(sQuery);
+    string sQuery = "SELECT " + sField + " FROM library_scripts " + "WHERE sScript = @sScript;";
+    sqlquery sql  = SqlPrepareQueryModule(sQuery);
     SqlBindString(sql, "@sScript", sScript);
 
     return SqlStep(sql) ? SqlGetString(sql, 0) : "";
@@ -301,9 +299,8 @@ sqlquery GetScriptData(string sScript)
 {
     CreateLibraryTable();
 
-    string sQuery = "SELECT sLibrary, nEntry FROM library_scripts " +
-                    "WHERE sScript = @sScript;";
-    sqlquery sql = SqlPrepareQueryModule(sQuery);
+    string sQuery = "SELECT sLibrary, nEntry FROM library_scripts " + "WHERE sScript = @sScript;";
+    sqlquery sql  = SqlPrepareQueryModule(sQuery);
     SqlBindString(sql, "@sScript", sScript);
 
     return sql;
@@ -313,9 +310,8 @@ int GetIsLibraryLoaded(string sLibrary)
 {
     CreateLibraryTable();
 
-    string sQuery = "SELECT COUNT(sLibrary) FROM library_scripts " +
-                    "WHERE sLibrary = @sLibrary LIMIT 1;";
-    sqlquery sql = SqlPrepareQueryModule(sQuery);
+    string sQuery = "SELECT COUNT(sLibrary) FROM library_scripts " + "WHERE sLibrary = @sLibrary LIMIT 1;";
+    sqlquery sql  = SqlPrepareQueryModule(sQuery);
     SqlBindString(sql, "@sLibrary", sLibrary);
 
     return SqlStep(sql) ? SqlGetInt(sql, 0) : FALSE;
@@ -334,14 +330,19 @@ void LoadLibrary(string sLibrary, int bForce = FALSE)
             string sChunk = NssInclude(sLibrary) + NssVoidMain(NssFunction("OnLibraryLoad"));
             string sError = ExecuteScriptChunk(sChunk, GetModule(), FALSE);
             if (sError != "")
+            {
                 CriticalError("Could not load " + sLibrary + ": " + sError);
+            }
         }
         else
+        {
             ExecuteScript(sLibrary, GetModule());
-
+        }
     }
     else
+    {
         Error("Library " + sLibrary + " already loaded!");
+    }
 }
 
 void LoadLibraries(string sLibraries, int bForce = FALSE)
@@ -350,7 +351,9 @@ void LoadLibraries(string sLibraries, int bForce = FALSE)
 
     int i, nCount = CountList(sLibraries);
     for (i = 0; i < nCount; i++)
+    {
         LoadLibrary(GetListItem(sLibraries, i), bForce);
+    }
 }
 
 // Private function for GetScriptsByPrefix*(). Adds all scripts of nResType
@@ -360,7 +363,9 @@ json _GetScriptsByPrefix(json jArray, string sPrefix, int nResType)
     int i;
     string sScript;
     while ((sScript = ResManFindPrefix(sPrefix, nResType, ++i)) != "")
+    {
         jArray = JsonArrayInsert(jArray, JsonString(sScript));
+    }
 
     return jArray;
 }
@@ -368,19 +373,21 @@ json _GetScriptsByPrefix(json jArray, string sPrefix, int nResType)
 json GetScriptsByPrefix(string sPrefix)
 {
     json jScripts = _GetScriptsByPrefix(JsonArray(), sPrefix, RESTYPE_NCS);
-         jScripts = _GetScriptsByPrefix(jScripts,    sPrefix, RESTYPE_NSS);
-         jScripts = JsonArrayTransform(jScripts, JSON_ARRAY_UNIQUE);
-         jScripts = JsonArrayTransform(jScripts, JSON_ARRAY_SORT_ASCENDING);
+    jScripts      = _GetScriptsByPrefix(jScripts, sPrefix, RESTYPE_NSS);
+    jScripts      = JsonArrayTransform(jScripts, JSON_ARRAY_UNIQUE);
+    jScripts      = JsonArrayTransform(jScripts, JSON_ARRAY_SORT_ASCENDING);
     return jScripts;
 }
 
-void LoadLibrariesByPattern(string sPatterns, int bForce = FALSE)
+void LoadLibrariesByPattern(string sPattern, int bForce = FALSE)
 {
-    if (sPatterns == "")
+    if (sPattern == "")
+    {
         return;
+    }
 
-    Debug("Finding libraries matching \"" + sPatterns + "\"");
-    json jPatterns  = ListToJson(sPatterns);
+    Debug("Finding libraries matching \"" + sPattern + "\"");
+    json jPatterns  = ListToJson(sPattern);
     json jLibraries = FilterByPatterns(GetScriptsByPrefix(""), jPatterns, TRUE);
     LoadLibraries(JsonToList(jLibraries), bForce);
 }
@@ -400,7 +407,10 @@ void LoadPrefixLibraries(string sPrefix, int bForce = FALSE)
 
 int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF)
 {
-    if (sScript == "") return -1;
+    if (sScript == "")
+    {
+        return -1;
+    }
 
     string sLibrary;
     int nEntry;
@@ -409,7 +419,7 @@ int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF)
     if (SqlStep(sqlScriptData))
     {
         sLibrary = SqlGetString(sqlScriptData, 0);
-        nEntry = SqlGetInt(sqlScriptData, 1);
+        nEntry   = SqlGetInt(sqlScriptData, 1);
     }
 
     DeleteLocalInt(oSelf, LIB_RETURN);
@@ -417,7 +427,7 @@ int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF)
     if (sLibrary != "")
     {
         Debug("Library script " + sScript + " found in " + sLibrary +
-            (nEntry != 0 ? " at entry " + IntToString(nEntry) : ""));
+              (nEntry != 0 ? " at entry " + IntToString(nEntry) : ""));
 
         SetScriptParam(LIB_LIBRARY, sLibrary);
         SetScriptParam(LIB_SCRIPT, sScript);
@@ -426,15 +436,20 @@ int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF)
         if (ResManGetAliasFor(sLibrary, RESTYPE_NCS) == "")
         {
             Debug(sLibrary + ".ncs not present; running library script as chunk");
-            string sChunk = NssInclude(sLibrary) + NssVoidMain(nEntry ?
-                NssFunction("OnLibraryScript", NssQuote(sScript) + ", " + IntToString(nEntry)) :
-                NssFunction(sScript));
+            string sChunk = NssInclude(sLibrary) +
+                            NssVoidMain(nEntry ? NssFunction("OnLibraryScript",
+                                                             NssQuote(sScript) + ", " + IntToString(nEntry))
+                                               : NssFunction(sScript));
             string sError = ExecuteScriptChunk(sChunk, oSelf, FALSE);
             if (sError != "")
-                CriticalError("RunLibraryScript(" + sScript +") failed: " + sError);
+            {
+                CriticalError("RunLibraryScript(" + sScript + ") failed: " + sError);
+            }
         }
         else
+        {
             ExecuteScript(sLibrary, oSelf);
+        }
     }
     else
     {
@@ -449,22 +464,27 @@ void RunLibraryScripts(string sScripts, object oSelf = OBJECT_SELF)
 {
     int i, nCount = CountList(sScripts);
     for (i = 0; i < nCount; i++)
+    {
         RunLibraryScript(GetListItem(sScripts, i), oSelf);
+    }
 }
 
 void RegisterLibraryScript(string sScript, int nEntry = 0)
 {
     string sLibrary = GetScriptParam(LIB_LIBRARY);
-    string sExist = GetScriptLibrary(sScript);
+    string sExist   = GetScriptLibrary(sScript);
 
     if (sLibrary != sExist && sExist != "")
+    {
         Warning(sLibrary + " is overriding " + sExist + "'s implementation of " + sScript);
+    }
 
     int nOldEntry = GetScriptEntry(sScript);
     if (nOldEntry)
-        Warning(sLibrary + " already declared " + sScript +
-            " Old Entry: " + IntToString(nOldEntry) +
-            " New Entry: " + IntToString(nEntry));
+    {
+        Warning(sLibrary + " already declared " + sScript + " Old Entry: " + IntToString(nOldEntry) +
+                " New Entry: " + IntToString(nEntry));
+    }
 
     AddLibraryScript(sLibrary, sScript, nEntry);
 }

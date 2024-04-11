@@ -110,7 +110,7 @@ json FilterByPattern(json jArray, string sPattern, int bNot = FALSE)
     return SqlStep(q) ? SqlGetJson(q, 0) : JsonArray();
 }
 
-json FilterByPatterns(json jArray, json jPatterns, int bOrderByPattern = FALSE)
+json FilterByPatterns(json jArray, json jPatterns, int bOrderByPatterns = FALSE)
 {
     if (!JsonGetLength(jArray) || ! JsonGetLength(jPatterns))
         return jArray;
@@ -121,7 +121,7 @@ json FilterByPatterns(json jArray, json jPatterns, int bOrderByPattern = FALSE)
                 "json_each(@values) v JOIN " +
                 "json_each(@patterns) p " +
                 "WHERE v.value GLOB p.value " +
-                (bOrderByPattern ? "ORDER BY p.key);" : ");"));
+                (bOrderByPatterns ? "ORDER BY p.key);" : ");"));
     SqlBindJson(q, "@values", jArray);
     SqlBindJson(q, "@patterns", jPatterns);
     return SqlStep(q) ? SqlGetJson(q, 0) : JsonArray();
