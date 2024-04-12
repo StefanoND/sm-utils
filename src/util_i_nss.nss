@@ -180,7 +180,8 @@ string NssCase(int nCase, string sContents, int bBreak = TRUE)
 
 string NssSemicolon(string sString)
 {
-    return (GetStringRight(sString, 1) == ";" || GetStringRight(sString, 2) == "; ") ? sString + " " : sString + "; ";
+    return (GetStringRight(sString, 1) == ";" || GetStringRight(sString, 2) == "; ") ? sString + " "
+                                                                                     : sString + "; ";
 }
 
 string NssVariable(string sType, string sVarName, string sValue)
