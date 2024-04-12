@@ -79,11 +79,15 @@ void SetDataItem(object oDatapoint, string sSubSystem, object oItem);
 object CreateDatapoint(string sSystem, object oOwner = OBJECT_INVALID)
 {
     if (oOwner == OBJECT_INVALID)
+    {
         oOwner = GetModule();
+    }
 
     location lLoc = GetLocation(oOwner);
     if (!GetObjectType(oOwner))
+    {
         lLoc = GetStartingLocation();
+    }
 
     object oData = CreateObject(OBJECT_TYPE_PLACEABLE, DATA_POINT, lLoc);
     SetName(oData, DATA_PREFIX + sSystem);
@@ -95,12 +99,16 @@ object CreateDatapoint(string sSystem, object oOwner = OBJECT_INVALID)
 object GetDatapoint(string sSystem, object oOwner = OBJECT_INVALID, int bCreate = TRUE)
 {
     if (oOwner == OBJECT_INVALID)
+    {
         oOwner = GetModule();
+    }
 
     object oData = GetLocalObject(oOwner, DATA_PREFIX + sSystem);
 
     if (!GetIsObjectValid(oData) && bCreate)
+    {
         oData = CreateDatapoint(sSystem, oOwner);
+    }
 
     return oData;
 }
@@ -108,7 +116,9 @@ object GetDatapoint(string sSystem, object oOwner = OBJECT_INVALID, int bCreate 
 void SetDatapoint(string sSystem, object oTarget, object oOwner = OBJECT_INVALID)
 {
     if (oOwner == OBJECT_INVALID)
+    {
         oOwner = GetModule();
+    }
 
     SetLocalObject(oOwner, DATA_PREFIX + sSystem, oTarget);
 }
