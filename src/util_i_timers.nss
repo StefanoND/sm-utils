@@ -187,6 +187,7 @@ int GetTimerRemaining(int nTimerID);
 /// @param nRemaining The remaining number of iterations.
 void SetTimerRemaining(int nTimerID, int nRemaining);
 
+/// @brief Destroys the TIMERS object, canceling all currently running timers.
 void DestroyTimers();
 
 // -----------------------------------------------------------------------------

@@ -61,6 +61,11 @@ int GetDebugLevel(object oTarget = OBJECT_SELF);
 ///     been set on oTarget, will use the module instead.
 void SetDebugLevel(int nLevel, object oTarget = OBJECT_SELF);
 
+/// @brief UnSet the verbosity of debug messages displayed for an object.
+/// @param oTarget The object to Unset the debug level of. If no debug level has
+///     been set on oTarget, will use the module instead.
+void UnSetDebugLevel(object oTarget = OBJECT_SELF);
+
 /// @brief Return the color of debug messages of a given level.
 /// @param nLevel A `DEBUG_LEVEL_*` constant representing the verbosity of debug
 ///     messsages to get the color for.
@@ -88,6 +93,10 @@ string GetDebugPrefix(object oTarget = OBJECT_SELF);
 /// @param oTarget The target to set the prefix for.
 void SetDebugPrefix(string sPrefix, object oTarget = OBJECT_SELF);
 
+/// @brief UnSet the prefix set on an object uses before its debug messages.
+/// @param oTarget The target to Unset the prefix for.
+void UnSetDebugPrefix(object oTarget = OBJECT_SELF);
+
 /// @brief Return the enabled debug logging destinations.
 /// @returns A bitmask of `DEBUG_LOG_*` values.
 int GetDebugLogging();
@@ -95,6 +104,9 @@ int GetDebugLogging();
 /// @brief Set the enabled debug logging destinations.
 /// @param nEnabled A bitmask of `DEBUG_LOG_*` destinations to enable.
 void SetDebugLogging(int nEnabled);
+
+/// @brief UnSet the debug logging destinations.
+void UnSetDebugLogging();
 
 /// @brief Add a player object to the debug message dispatch list.  Player
 ///     objects on the dispatch list will receive debug messages if the
@@ -183,6 +195,11 @@ void SetDebugLevel(int nLevel, object oTarget = OBJECT_SELF)
     SetLocalInt(oTarget, DEBUG_LEVEL, nLevel);
 }
 
+void UnSetDebugLevel(object oTarget = OBJECT_SELF)
+{
+    DeleteLocalInt(oTarget, DEBUG_LEVEL);
+}
+
 string GetDebugColor(int nLevel)
 {
     string sColor = GetLocalString(GetModule(), DEBUG_COLOR + IntToString(nLevel));
@@ -251,6 +268,11 @@ void SetDebugPrefix(string sPrefix, object oTarget = OBJECT_SELF)
     SetLocalString(oTarget, DEBUG_PREFIX, sPrefix);
 }
 
+void UnSetDebugPrefix(object oTarget = OBJECT_SELF)
+{
+    DeleteLocalString(oTarget, DEBUG_PREFIX);
+}
+
 int GetDebugLogging()
 {
     return GetLocalInt(GetModule(), DEBUG_LOG);
@@ -259,6 +281,11 @@ int GetDebugLogging()
 void SetDebugLogging(int nEnabled)
 {
     SetLocalInt(GetModule(), DEBUG_LOG, nEnabled);
+}
+
+void UnSetDebugLogging()
+{
+    DeleteLocalInt(GetModule(), DEBUG_LOG);
 }
 
 void AddDebugLoggingPC(object oPC)

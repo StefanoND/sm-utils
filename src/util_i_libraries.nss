@@ -147,6 +147,7 @@ const string LIB_RETURN  = "LIB_RETURN";  ///< The return value of the library
 const string LIB_LIBRARY = "LIB_LIBRARY"; ///< The library being processed
 const string LIB_SCRIPT  = "LIB_SCRIPT";  ///< The library script name
 const string LIB_ENTRY   = "LIB_ENTRY";   ///< The library script entry number
+const string LIB_LIST    = "LIB_LIST";    ///< The list of libraries loaded
 
 // -----------------------------------------------------------------------------
 //                              Function Prototypes
@@ -190,12 +191,12 @@ int GetIsLibraryLoaded(string sLibrary);
 /// @brief Load a script library by executing its OnLibraryLoad() function.
 /// @param sLibrary The name of the script library file.
 /// @param bForce If TRUE, will re-load the library if it was already loaded.
-void LoadLibrary(string sLibrary, int bForce = FALSE);
+void LoadLibrary(string sLibrary, int bForce = FALSE, object oPlugin = OBJECT_INVALID);
 
 /// @brief Load a list of script libraries in sequence.
 /// @param sLibraries A CSV list of libraries to load.
 /// @param bForce If TRUE, will re-load the library if it was already loaded.
-void LoadLibraries(string sLibraries, int bForce = FALSE);
+void LoadLibraries(string sLibraries, int bForce = FALSE, object oPlugin = OBJECT_INVALID);
 
 /// @brief Return a json array of script names with a prefix.
 /// @param sPrefix The prefix matching the scripts to find.
@@ -211,13 +212,13 @@ json GetScriptsByPrefix(string sPrefix);
 ///     - `[a-z]`: match any character from a-z
 ///     - other text is matched literally
 /// @param bForce If TRUE, will-reload the library if it was already loaded.
-void LoadLibrariesByPattern(string sPattern, int bForce = FALSE);
+void LoadLibrariesByPattern(string sPattern, int bForce = FALSE, object oPlugin = OBJECT_INVALID);
 
 /// @brief Load all scripts with a given prefix as script libraries.
 /// @param sPrefix A prefix for the desired script libraries.
 /// @param bForce If TRUE, will re-load the library if it was already loaded.
 /// @see GetMatchesPattern() for the rules on glob syntax.
-void LoadLibrariesByPrefix(string sPrefix, int bForce = FALSE);
+void LoadLibrariesByPrefix(string sPrefix, int bForce = FALSE, object oPlugin = OBJECT_INVALID);
 
 /// @brief Execute a registered library script.
 /// @param sScript The unique name of the library script.
@@ -323,7 +324,7 @@ int GetIsLibraryLoaded(string sLibrary)
     return SqlStep(sql) ? SqlGetInt(sql, 0) : FALSE;
 }
 
-void LoadLibrary(string sLibrary, int bForce = FALSE)
+void LoadLibrary(string sLibrary, int bForce = FALSE, object oPlugin = OBJECT_INVALID)
 {
     Debug("Attempting to " + (bForce ? "force " : "") + "load library " + sLibrary);
 
@@ -344,6 +345,20 @@ void LoadLibrary(string sLibrary, int bForce = FALSE)
         {
             ExecuteScript(sLibrary, GetModule());
         }
+
+        if (GetIsObjectValid(oPlugin))
+        {
+            string sLibraryList = GetLocalString(oPlugin, LIB_LIST);
+
+            if (sLibraryList == "")
+            {
+                SetLocalString(oPlugin, LIB_LIST, sLibrary);
+            }
+            else if (!FindSubString(sLibraryList, sLibrary))
+            {
+                SetLocalString(oPlugin, LIB_LIST, sLibraryList + "," + sLibrary);
+            }
+        }
     }
     else
     {
@@ -351,14 +366,14 @@ void LoadLibrary(string sLibrary, int bForce = FALSE)
     }
 }
 
-void LoadLibraries(string sLibraries, int bForce = FALSE)
+void LoadLibraries(string sLibraries, int bForce = FALSE, object oPlugin = OBJECT_INVALID)
 {
     Debug("Attempting to " + (bForce ? "force " : "") + "load libraries " + sLibraries);
 
     int i, nCount = CountList(sLibraries);
     for (i = 0; i < nCount; i++)
     {
-        LoadLibrary(GetListItem(sLibraries, i), bForce);
+        LoadLibrary(GetListItem(sLibraries, i), bForce, oPlugin);
     }
 }
 
@@ -385,7 +400,7 @@ json GetScriptsByPrefix(string sPrefix)
     return jScripts;
 }
 
-void LoadLibrariesByPattern(string sPattern, int bForce = FALSE)
+void LoadLibrariesByPattern(string sPattern, int bForce = FALSE, object oPlugin = OBJECT_INVALID)
 {
     if (sPattern == "")
     {
@@ -395,20 +410,20 @@ void LoadLibrariesByPattern(string sPattern, int bForce = FALSE)
     Debug("Finding libraries matching \"" + sPattern + "\"");
     json jPatterns  = ListToJson(sPattern);
     json jLibraries = FilterByPatterns(GetScriptsByPrefix(""), jPatterns, TRUE);
-    LoadLibraries(JsonToList(jLibraries), bForce);
+    LoadLibraries(JsonToList(jLibraries), bForce, oPlugin);
 }
 
-void LoadLibrariesByPrefix(string sPrefix, int bForce = FALSE)
+void LoadLibrariesByPrefix(string sPrefix, int bForce = FALSE, object oPlugin = OBJECT_INVALID)
 {
     Debug("Finding libraries with prefix \"" + sPrefix + "\"");
     json jLibraries = GetScriptsByPrefix(sPrefix);
-    LoadLibraries(JsonToList(jLibraries), bForce);
+    LoadLibraries(JsonToList(jLibraries), bForce, oPlugin);
 }
 
-void LoadPrefixLibraries(string sPrefix, int bForce = FALSE)
+void LoadPrefixLibraries(string sPrefix, int bForce = FALSE, object oPlugin = OBJECT_INVALID)
 {
     Debug("LoadPrefixLibraries() is deprecated; use LoadLibrariesByPrefix()");
-    LoadLibrariesByPrefix(sPrefix, bForce);
+    LoadLibrariesByPrefix(sPrefix, bForce, oPlugin);
 }
 
 int RunLibraryScript(string sScript, object oSelf = OBJECT_SELF)
