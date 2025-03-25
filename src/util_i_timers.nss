@@ -140,8 +140,8 @@ void CreateTimersTable(int bReset = FALSE);
 ///     called using ExecuteScript() instead.
 /// @returns the ID of the timer. Save this so it can be used to start, stop, or
 ///     kill the timer later.
-int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations = 0, float fJitter = 0.0,
-                string sHandler = "");
+int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations = 0,
+                float fJitter = 0.0, string sHandler = "");
 
 /// @brief Return if a timer exists.
 /// @param nTimerID The ID of the timer in the database.
@@ -201,8 +201,8 @@ void _TimerElapsed(int nTimerID, int nRunID, int bFirstRun = FALSE)
     // and restarted before the delayed call could fail due to the timer being
     // stopped. We increment the run_id whenever the timer is started and pass
     // it along to the delayed calls so they can check if they are still valid.
-    sqlquery q = SqlPrepareQueryModule("SELECT * FROM timers " +
-                                       "WHERE timer_id = @timer_id AND run_id = @run_id AND running = 1;");
+    sqlquery q = SqlPrepareQueryModule(
+        "SELECT * FROM timers " + "WHERE timer_id = @timer_id AND run_id = @run_id AND running = 1;");
     SqlBindInt(q, "@timer_id", nTimerID);
     SqlBindInt(q, "@run_id", nRunID);
 
@@ -225,10 +225,11 @@ void _TimerElapsed(int nTimerID, int nRunID, int bFirstRun = FALSE)
     object oTarget  = StringToObject(sTarget);
     object oSource  = StringToObject(sSource);
 
-    string sMsg =
-        "\n    Target: " + sTarget + " (" + (GetIsObjectValid(oTarget) ? GetName(oTarget) : "INVALID") + ")" +
-        "\n    Source: " + sSource + " (" + (GetIsObjectValid(oTarget) ? GetName(oSource) : "INVALID") + ")" +
-        "\n    Action: " + sAction + "\n    Handler: " + sHandler;
+    string sMsg = "\n    Target: " + sTarget + " (" +
+                  (GetIsObjectValid(oTarget) ? GetName(oTarget) : "INVALID") + ")" +
+                  "\n    Source: " + sSource + " (" +
+                  (GetIsObjectValid(oTarget) ? GetName(oSource) : "INVALID") + ")" +
+                  "\n    Action: " + sAction + "\n    Handler: " + sHandler;
 
     if (!GetIsObjectValid(oTarget) || (bIsPC && !GetIsPC(oTarget)))
     {
@@ -303,22 +304,22 @@ void CreateTimersTable(int bReset = FALSE)
     // able to cancel all currently running timers.
     DestroyObject(TIMERS);
 
-    SqlCreateTableModule("timers",
-                         "timer_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                             "run_id INTEGER NOT NULL DEFAULT 0, " + "running BOOLEAN NOT NULL DEFAULT 0, " +
-                             "action TEXT NOT NULL, " + "handler TEXT NOT NULL, " + "target TEXT NOT NULL, " +
-                             "source TEXT NOT NULL, " + "interval REAL NOT NULL, " +
-                             "jitter REAL NOT NULL, " + "iterations INTEGER NOT NULL, " +
-                             "remaining INTEGER NOT NULL, " + "is_pc BOOLEAN NOT NULL DEFAULT 0",
-                         bReset);
+    SqlCreateTableModule(
+        "timers",
+        "timer_id INTEGER PRIMARY KEY AUTOINCREMENT, " + "run_id INTEGER NOT NULL DEFAULT 0, " +
+            "running BOOLEAN NOT NULL DEFAULT 0, " + "action TEXT NOT NULL, " +
+            "handler TEXT NOT NULL, " + "target TEXT NOT NULL, " + "source TEXT NOT NULL, " +
+            "interval REAL NOT NULL, " + "jitter REAL NOT NULL, " + "iterations INTEGER NOT NULL, " +
+            "remaining INTEGER NOT NULL, " + "is_pc BOOLEAN NOT NULL DEFAULT 0",
+        bReset);
 
     TIMERS = CreateDatapoint(TIMER_DATAPOINT);
     SetDebugPrefix(HexColorString("[Timers]", COLOR_CYAN), TIMERS);
     SetLocalInt(TIMERS, TIMER_INIT, TRUE);
 }
 
-int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations = 0, float fJitter = 0.0,
-                string sHandler = "")
+int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations = 0,
+                float fJitter = 0.0, string sHandler = "")
 {
     string sSource = ObjectToString(OBJECT_SELF);
     string sTarget = ObjectToString(oTarget);
@@ -352,7 +353,7 @@ int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations
     {
         sError = "nIterations is negative";
     }
-    else if (fInterval < MIN_INTERVAL_INFINITE_ITERATIONS && !nIterations)
+    else if (fInterval < TIMER_MIN_INTERVAL_INFINITE_ITERATIONS && !nIterations)
     {
         sError = "fInterval is too short for infinite executions";
     }
@@ -367,7 +368,8 @@ int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations
     sqlquery q = SqlPrepareQueryModule(
         "INSERT INTO timers " +
         "(action, handler, target, source, interval, jitter, iterations, remaining, is_pc) " +
-        "VALUES (@action, @handler, @target, @source, @interval, @jitter, @iterations, @remaining, @is_pc) " +
+        "VALUES (@action, @handler, @target, @source, @interval, @jitter, @iterations, @remaining, "
+        "@is_pc) " +
         "RETURNING timer_id;");
     SqlBindString(q, "@action", sAction);
     SqlBindString(q, "@handler", sHandler);
@@ -431,8 +433,8 @@ void StartTimer(int nTimerID, int bInstant = TRUE)
 void StopTimer(int nTimerID)
 {
     CreateTimersTable();
-    sqlquery q =
-        SqlPrepareQueryModule("UPDATE timers SET running = 0 " + "WHERE timer_id = @timer_id RETURNING 1;");
+    sqlquery q = SqlPrepareQueryModule("UPDATE timers SET running = 0 " +
+                                       "WHERE timer_id = @timer_id RETURNING 1;");
     SqlBindInt(q, "@timer_id", nTimerID);
     if (SqlStep(q))
     {
@@ -443,8 +445,9 @@ void StopTimer(int nTimerID)
 void ResetTimer(int nTimerID)
 {
     CreateTimersTable();
-    sqlquery q = SqlPrepareQueryModule("UPDATE timers SET remaining = timers.iterations " +
-                                       "WHERE timer_id = @timer_id AND iterations > 0 RETURNING remaining;");
+    sqlquery q =
+        SqlPrepareQueryModule("UPDATE timers SET remaining = timers.iterations " +
+                              "WHERE timer_id = @timer_id AND iterations > 0 RETURNING remaining;");
     SqlBindInt(q, "@timer_id", nTimerID);
     if (SqlStep(q))
     {
