@@ -15,4 +15,4 @@
 /// - Function colors copied from https://nwn.wiki/display/NWN1/Colour+Tokens.
 /// ----------------------------------------------------------------------------
 
-const float MIN_INTERVAL_INFINITE_ITERATIONS = 0.25f;
+const float MIN_INTERVAL_INFINITE_ITERATIONS = 2.00f;
