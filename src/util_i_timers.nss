@@ -368,9 +368,8 @@ int CreateTimer(object oTarget, string sAction, float fInterval, int nIterations
     sqlquery q = SqlPrepareQueryModule(
         "INSERT INTO timers " +
         "(action, handler, target, source, interval, jitter, iterations, remaining, is_pc) " +
-        "VALUES (@action, @handler, @target, @source, @interval, @jitter, @iterations, @remaining, "
-        "@is_pc) " +
-        "RETURNING timer_id;");
+        "VALUES (@action, @handler, @target, @source, @interval, @jitter, @iterations, @remaining, " +
+        "@is_pc) RETURNING timer_id;");
     SqlBindString(q, "@action", sAction);
     SqlBindString(q, "@handler", sHandler);
     SqlBindString(q, "@target", sTarget);
