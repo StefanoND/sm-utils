@@ -70,9 +70,6 @@ void OnLibraryScript(string sScript, int nEntry);
 
 void main()
 {
-    if (GetScriptParam(LIB_ENTRY) == "")
-        OnLibraryLoad();
-    else
-        OnLibraryScript(GetScriptParam(LIB_SCRIPT),
-            StringToInt(GetScriptParam(LIB_ENTRY)));
+    if (GetScriptParam(LIB_ENTRY) == "") OnLibraryLoad();
+    else OnLibraryScript(GetScriptParam(LIB_SCRIPT), StringToInt(GetScriptParam(LIB_ENTRY)));
 }
